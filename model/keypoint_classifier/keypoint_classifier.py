@@ -32,8 +32,7 @@ class KeyPointClassifier(object):
 )
         result_index = np.argmax(result)
 
-        if result[result_index] > 0.9: # defines confidence
-            print(result[result_index] )
+        if result[result_index] > 0.95: # defines confidence
             return result_index
         else:
             return None

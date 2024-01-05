@@ -186,7 +186,6 @@ def main():
                     sign = 'Not Trained!'
                 else:
                     sign = keypoint_classifier_labels[hand_sign_id]
-                    print(keypoint_classifier_labels[hand_sign_id])
 
                 cv.putText(debug_image, 'Detected: ' + sign, (10, 50),
                    cv.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1, cv.LINE_AA)
