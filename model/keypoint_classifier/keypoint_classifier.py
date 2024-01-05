@@ -28,8 +28,12 @@ class KeyPointClassifier(object):
 
         output_details_tensor_index = self.output_details[0]['index']
 
-        result = self.interpreter.get_tensor(output_details_tensor_index)
+        result = np.squeeze(self.interpreter.get_tensor(output_details_tensor_index)
+)
+        result_index = np.argmax(result)
 
-        result_index = np.argmax(np.squeeze(result))
-
-        return result_index
+        if result[result_index] > 0.9: # defines confidence
+            print(result[result_index] )
+            return result_index
+        else:
+            return None

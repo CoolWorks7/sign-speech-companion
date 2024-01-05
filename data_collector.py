@@ -7,7 +7,6 @@ import mediapipe as mp
 from model import KeyPointClassifier
 import argparse
 import ctypes
-from utils import CvFpsCalc
 
 
 def get_args():
@@ -29,11 +28,9 @@ def main():
     width = int(user32.GetSystemMetrics(0) / 2)
     height = int(user32.GetSystemMetrics(1) / 2)
 
-    # Argument parsing #################################################################
+    # --------------------- Argument parsing --------------------- #
     args = get_args()
     cap_device = args.device
-    # width = args.width
-    # height = args.height
 
     use_static_image_mode = args.use_static_image_mode
     min_detection_confidence = args.min_detection_confidence
@@ -47,12 +44,12 @@ def main():
     NEXT_AFTER = 15*seconds
     use_brect = True
 
-    # Camera preparation ###############################################################
+    # --------------------- Camera Preparation --------------------- #
     cap = cv.VideoCapture(cap_device)
     cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
 
-    # Model load #############################################################
+    # --------------------- Load MediaPipe Model --------------------- #
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
         static_image_mode=use_static_image_mode,
@@ -61,10 +58,10 @@ def main():
         min_tracking_confidence=min_tracking_confidence,
     )
 
-    ################################################################################
+    # --------------------- Load NN Classifier Model --------------------- #
     keypoint_classifier = KeyPointClassifier()
 
-    # Read labels ###########################################################
+    # --------------------- Read Labels --------------------- #
     with open('model/keypoint_classifier/keypoint_classifier_label.csv',
               encoding='utf-8-sig') as f:
         keypoint_classifier_labels = csv.reader(f)
@@ -72,12 +69,11 @@ def main():
             row[0] for row in keypoint_classifier_labels
         ]
 
-    #  ########################################################################
+    # --------------------- Initial Setup --------------------- #
     mode = 1
     t = 0
 
     while True:
-        # Process Key (ESC: end) #################################################
         key = cv.waitKey(10)
         # if key != -1:
         #     print(key)
@@ -110,11 +106,11 @@ def main():
             COUNTER = 0
             if STARTED: print('Started Logging!')
             else: print('Stopped Logging!')
+        elif key == 104:
+            show_help()
 
         number = NUMBER
-        # number, mode = select_mode(key, mode, NUMBER)
-
-        #
+        
         if STARTED:
             t = t + 1
             if t % NEXT_AFTER == 0:
@@ -123,49 +119,40 @@ def main():
                 COUNTER = COUNTER + 1
 
 
-        # Camera capture #####################################################
+        # --------------------- Capture Camera --------------------- #
         ret, image = cap.read()
         if not ret:
             break
         image = cv.flip(image, 1)  # Mirror display
         debug_image = copy.deepcopy(image)
 
-        # Detection implementation #############################################################
+        # --------------------- Image Pre-Processing --------------------- #
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
 
         image.flags.writeable = False
         results = hands.process(image)
         image.flags.writeable = True
 
-        #  ####################################################################
-        # print(results.multi_hand_landmarks)
-        # i = 0
+        data_points = {
+            'Left': [0]*42,
+            'Right': [0]*42,
+            'detected': False
+        }
+        # If hands are detected
         if results.multi_hand_landmarks is not None:
-            for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
-                                                  results.multi_handedness):
-
+            for hand_landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
                 # Bounding box calculation
                 brect = calc_bounding_rect(debug_image, hand_landmarks)
+                
                 # Landmark calculation
                 landmark_list = calc_landmark_list(debug_image, hand_landmarks)
 
                 # Conversion to relative coordinates / normalized coordinates
-                pre_processed_landmark_list = pre_process_landmark(
-                    landmark_list)
-
-                # Write to the dataset file
-                if LOGGING_BOOL:
-                    # print(len(pre_processed_landmark_list))
-                    # logging_csv(number, pre_processed_landmark_list)
-                    print('Data Collected: ' + str(number))
-                    # print(pre_processed_landmark_list)
-                    LOGGING_BOOL = False
-
-                # print(str(i) + ' ' + str(len(pre_processed_landmark_list)))
-                # i = i + 1
-
-                # Hand sign classification
-                hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
+                pre_processed_landmark_list = pre_process_landmark(landmark_list)
+                
+                # Pushing the Data_point of each hand into data_points dict
+                data_points[handedness.classification[0].label[0:]] = pre_processed_landmark_list
+                data_points['detected'] = True
 
                 # Drawing part
                 debug_image = draw_bounding_rect(use_brect, debug_image, brect)
@@ -174,33 +161,57 @@ def main():
                     debug_image,
                     brect,
                     handedness,
-                    keypoint_classifier_labels[hand_sign_id]
+                    # keypoint_classifier_labels[hand_sign_id]
+                    ''
                 )
 
+        # Drawing While Rectangle
+        cv.rectangle(debug_image, (0, 0), (150, 60), (255, 255, 255), -1)
 
-        # print(t)
+        if data_points['detected'] == True:
+            # merge the landmarks of two hands
+            merged_landmark_list = np.concatenate((data_points['Left'], data_points['Right']), axis=0)
+
+            # --------------------- Write to the dataset file --------------------- #
+            if LOGGING_BOOL:
+                logging_csv(number, merged_landmark_list)
+                print('Data Collected: ' + str(number))
+                LOGGING_BOOL = False
+
+            # --------------------- Hand Sign Classification Process --------------------- #
+            elif mode == 0:
+                hand_sign_id = keypoint_classifier(merged_landmark_list)
+
+                if hand_sign_id == None:
+                    sign = 'Not Trained!'
+                else:
+                    sign = keypoint_classifier_labels[hand_sign_id]
+                    print(keypoint_classifier_labels[hand_sign_id])
+
+                cv.putText(debug_image, 'Detected: ' + sign, (10, 50),
+                   cv.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1, cv.LINE_AA)
+
+
+        # Other Stuff
         res = int(t*(width/NEXT_AFTER))
         cv.rectangle(debug_image, (0, height - 20), (res, height), (0, 0, 255), -1)
 
         mode_info(mode, debug_image, COUNTER)
-        # Screen reflection #############################################################
+
+        # --------------------- Display Screen --------------------- #
         cv.imshow('Hand Gesture Recognition', debug_image)
 
     cap.release()
     cv.destroyAllWindows()
 
-
-def select_mode(key, mode, number):
-    # number = -1
-    if mode == 1:
-        if 48 <= key <= 57:  # 0 ~ 9
-            n = key - 48
-            number = number * 10 + n
-            # mode = 0
-    if key == 107:  # k
-        mode = 1
-    return number, mode
-
+def show_help():
+    print('k \t=>\t change the mode i.e logging/detecting')
+    print('0 - 9 \t=>\t input the label number')
+    print('backspace \t=>\t remove the last digit of the number')
+    print('x \t=>\t reset the number back to 0')
+    print('s \t=>\t add a single data when on logging data mode')
+    print('enter \t=>\t start/stop the continous logging of data')
+    print('esc \t=>\t close the application')
 
 def calc_bounding_rect(image, landmarks):
     image_width, image_height = image.shape[1], image.shape[0]
