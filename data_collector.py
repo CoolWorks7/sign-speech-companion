@@ -7,6 +7,7 @@ import mediapipe as mp
 from model import KeyPointClassifier
 import argparse
 import ctypes
+from insight import get_insight
 
 
 def get_args():
@@ -106,7 +107,9 @@ def main():
             COUNTER = 0
             if STARTED: print('Started Logging!')
             else: print('Stopped Logging!')
-        elif key == 104:
+        elif key == 103:    # g -> get insight
+            get_insight()
+        elif key == 104:    # h -> help
             show_help()
 
         number = NUMBER
