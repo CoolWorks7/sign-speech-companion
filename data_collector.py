@@ -212,7 +212,8 @@ def show_help():
     print('backspace \t=>\t remove the last digit of the number')
     print('x \t=>\t reset the number back to 0')
     print('s \t=>\t add a single data when on logging data mode')
-    print('enter \t=>\t start/stop the continous logging of data')
+    print('s \t=>\t add a single data when on logging data mode')
+    print('g \t=>\t get insight on the collected data')
     print('esc \t=>\t close the application')
 
 def calc_bounding_rect(image, landmarks):
