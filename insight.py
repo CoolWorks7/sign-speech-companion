@@ -20,3 +20,6 @@ def get_insight():
 
     for number, count in number_counts.items():
         print(f"{keypoint_classifier_labels[int(number)]}: {count} occurrences")
+
+if __name__ == '__main__':
+    get_insight()

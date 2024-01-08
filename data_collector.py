@@ -59,6 +59,15 @@ def main():
         min_tracking_confidence=min_tracking_confidence,
     )
 
+    mp_face = mp.solutions.face_detection
+    face = mp_face.FaceDetection(
+        # static_image_mode=use_static_image_mode,
+        # max_num_hands=2,
+        # min_detection_confidence=min_detection_confidence,
+        # min_tracking_confidence=min_tracking_confidence,
+        model_selection=1, min_detection_confidence=0.5
+    )
+
     # --------------------- Load NN Classifier Model --------------------- #
     keypoint_classifier = KeyPointClassifier()
 
@@ -134,27 +143,36 @@ def main():
 
         image.flags.writeable = False
         results = hands.process(image)
+        result2 = face.process(image)
         image.flags.writeable = True
 
         data_points = {
-            'Left': [0]*42,
-            'Right': [0]*42,
+            'Face': [[0, 0]]*1,
+            'Left': [[0, 0]]*21,
+            'Right': [[0, 0]]*21,
             'detected': False
         }
+
+        # if face is detected
+        if result2.detections is not None:
+            face_landmarks = result2.detections[0].location_data
+            face_bounding_rect = calc_bounding_rect_face(debug_image, [face_landmarks.relative_bounding_box])
+            face_landmarks_list = calc_landmark_list_face(debug_image, face_landmarks.relative_keypoints)[2: 3]
+            data_points['Face'] = face_landmarks_list
+
+            debug_image = draw_bounding_rect(use_brect, debug_image, face_bounding_rect)
+            debug_image = draw_face_landmarks(debug_image, face_landmarks_list)
+            
+
         # If hands are detected
         if results.multi_hand_landmarks is not None:
             for hand_landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
-                # Bounding box calculation
-                brect = calc_bounding_rect(debug_image, hand_landmarks)
-                
-                # Landmark calculation
-                landmark_list = calc_landmark_list(debug_image, hand_landmarks)
 
-                # Conversion to relative coordinates / normalized coordinates
-                pre_processed_landmark_list = pre_process_landmark(landmark_list)
-                
-                # Pushing the Data_point of each hand into data_points dict
-                data_points[handedness.classification[0].label[0:]] = pre_processed_landmark_list
+                brect = calc_bounding_rect(debug_image, hand_landmarks)
+                landmark_list = calc_landmark_list(debug_image, hand_landmarks)
+                data_points[handedness.classification[0].label[0:]] = landmark_list
+                # pre_processed_landmark_list = pre_process_landmark(landmark_list)
+                # data_points[handedness.classification[0].label[0:]] = pre_processed_landmark_list
                 data_points['detected'] = True
 
                 # Drawing part
@@ -173,17 +191,19 @@ def main():
 
         if data_points['detected'] == True:
             # merge the landmarks of two hands
-            merged_landmark_list = np.concatenate((data_points['Left'], data_points['Right']), axis=0)
+            merged_landmark_list = np.concatenate((data_points['Face'], data_points['Left'], data_points['Right']), axis=0)
+            # convert the points relatively to 1st point
+            pre_process_merged_list = pre_process_landmark(merged_landmark_list)
 
             # --------------------- Write to the dataset file --------------------- #
             if LOGGING_BOOL:
-                logging_csv(number, merged_landmark_list)
+                logging_csv(number, pre_process_merged_list)
                 print('Data Collected: ' + str(number))
                 LOGGING_BOOL = False
 
             # --------------------- Hand Sign Classification Process --------------------- #
             elif mode == 0:
-                hand_sign_id = keypoint_classifier(merged_landmark_list)
+                hand_sign_id = keypoint_classifier(pre_process_merged_list)
 
                 if hand_sign_id == None:
                     sign = 'Not Trained!'
@@ -218,7 +238,6 @@ def show_help():
 
 def calc_bounding_rect(image, landmarks):
     image_width, image_height = image.shape[1], image.shape[0]
-
     landmark_array = np.empty((0, 2), int)
 
     for _, landmark in enumerate(landmarks.landmark):
@@ -233,6 +252,19 @@ def calc_bounding_rect(image, landmarks):
 
     return [x, y, x + w, y + h]
 
+def calc_bounding_rect_face(image, landmarks):
+    image_width, image_height = image.shape[1], image.shape[0]
+    landmark_array = []
+
+    for _, landmark in enumerate(landmarks):
+        landmark_x = min(int(landmark.xmin * image_width), image_width - 1)
+        landmark_y = min(int(landmark.ymin * image_height), image_height - 1)
+        landmark_width = min(int(landmark.width * image_width), image_width - 1)
+        landmark_height = min(int(landmark.height * image_height), image_height - 1)
+
+        landmark_array = [landmark_x, landmark_y, landmark_x + landmark_width,  landmark_y + landmark_height]
+    return landmark_array
+
 
 def calc_landmark_list(image, landmarks):
     image_width, image_height = image.shape[1], image.shape[0]
@@ -241,6 +273,21 @@ def calc_landmark_list(image, landmarks):
 
     # Keypoint
     for _, landmark in enumerate(landmarks.landmark):
+        landmark_x = min(int(landmark.x * image_width), image_width - 1)
+        landmark_y = min(int(landmark.y * image_height), image_height - 1)
+        # landmark_z = landmark.z
+
+        landmark_point.append([landmark_x, landmark_y])
+
+    return landmark_point
+
+def calc_landmark_list_face(image, landmarks):
+    image_width, image_height = image.shape[1], image.shape[0]
+
+    landmark_point = []
+
+    # Keypoint
+    for _, landmark in enumerate(landmarks):
         landmark_x = min(int(landmark.x * image_width), image_width - 1)
         landmark_y = min(int(landmark.y * image_height), image_height - 1)
         # landmark_z = landmark.z
@@ -471,6 +518,12 @@ def draw_landmarks(image, landmark_point):
 
     return image
 
+
+def draw_face_landmarks(image, landmark_points):
+    for index, landmark_point in enumerate(landmark_points):
+        cv.circle(image, (landmark_point[0], landmark_point[1]), 3, (255, 255, 255), -1)
+        # cv.putText(image, str(index), (landmark_point[0], landmark_point[1]), cv.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1, cv.LINE_AA)
+    return image
 
 def draw_bounding_rect(use_brect, image, brect):
     if use_brect:
