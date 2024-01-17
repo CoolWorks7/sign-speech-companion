@@ -3,11 +3,12 @@ import copy
 import itertools
 import cv2 as cv
 import numpy as np
-import mediapipe as mp
+# import mediapipe as mp
 from model import KeyPointClassifier
 import argparse
 import ctypes
 from insight import get_insight
+import dill
 
 
 def get_args():
@@ -25,6 +26,7 @@ def get_args():
 
 
 def main():
+    print('started')
     user32 = ctypes.windll.user32
     width = int(user32.GetSystemMetrics(0) / 2)
     height = int(user32.GetSystemMetrics(1) / 2)
@@ -51,15 +53,22 @@ def main():
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
 
     # --------------------- Load MediaPipe Model --------------------- #
-    mp_hands = mp.solutions.hands
+    # mp_hands = mp.solutions.hands
+    with open("hands.pkl", "rb") as file:
+        mp_hands = dill.load(file)
     hands = mp_hands.Hands(
         static_image_mode=use_static_image_mode,
         max_num_hands=2,
         min_detection_confidence=min_detection_confidence,
         min_tracking_confidence=min_tracking_confidence,
     )
+    # with open("hands.pkl", "wb") as file:
+    #     dill.dump(mp_hands, file)
+    #     print('saved')
 
-    mp_face = mp.solutions.face_detection
+    # mp_face = mp.solutions.face_detection
+    with open("face.pkl", "rb") as file:
+        mp_face = dill.load(file)
     face = mp_face.FaceDetection(
         # static_image_mode=use_static_image_mode,
         # max_num_hands=2,
@@ -67,6 +76,11 @@ def main():
         # min_tracking_confidence=min_tracking_confidence,
         model_selection=1, min_detection_confidence=0.5
     )
+    
+
+    # with open("face.pkl", "wb") as file:
+    #     dill.dump(mp_face, file)
+    #     print('saved')
 
     # --------------------- Load NN Classifier Model --------------------- #
     keypoint_classifier = KeyPointClassifier()
@@ -106,8 +120,7 @@ def main():
                 print('Mode: Logging Data!')
         elif 0 <= (key - 48) <= 9 and not STARTED:
             if mode == 1: NUMBER = NUMBER*10 + (key - 48)
-            print(NUMBER, end=' corresponds to ')
-            print(keypoint_classifier_labels[NUMBER])
+            print(NUMBER)
         elif key == 8 and not STARTED:  # backspace -> Delete the last number
             if mode == 1: NUMBER = int(NUMBER/10)
             print(NUMBER)
