@@ -9,6 +9,9 @@ import argparse
 import ctypes
 from insight import get_insight
 
+LOOK_UP_TABLE = {
+    'h': ['h_1', 'h_2'],
+}
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -24,7 +27,11 @@ def get_args():
     return args
 
 
+BUFFER = []
+
 def main():
+    global BUFFER
+
     user32 = ctypes.windll.user32
     width = int(user32.GetSystemMetrics(0) / 2)
     height = int(user32.GetSystemMetrics(1) / 2)
@@ -44,6 +51,8 @@ def main():
     NUMBER = 0
     NEXT_AFTER = 15*seconds
     use_brect = True
+    SYMBOL_COUNTER = 0
+    MAX_SYMBOL_COUNTER = 32
 
     # --------------------- Camera Preparation --------------------- #
     cap = cv.VideoCapture(cap_device)
@@ -191,6 +200,11 @@ def main():
         cv.rectangle(debug_image, (0, 0), (150, 60), (255, 255, 255), -1)
 
         if data_points['detected'] == True:
+            # incrementing the symbol counter
+            SYMBOL_COUNTER = SYMBOL_COUNTER + 1
+            
+            # print('INFINITE')
+
             # merge the landmarks of two hands
             merged_landmark_list = np.concatenate((data_points['Face'], data_points['Left'], data_points['Right']), axis=0)
             # convert the points relatively to 1st point
@@ -209,6 +223,13 @@ def main():
                 if hand_sign_id == None:
                     sign = 'Not Trained!'
                 else:
+                    symbol = keypoint_classifier_labels[hand_sign_id]
+                    if len(BUFFER) == 0 or BUFFER[-1] != symbol:
+                        if SYMBOL_COUNTER >= MAX_SYMBOL_COUNTER:
+                            SYMBOL_COUNTER = 0
+                            BUFFER.append(symbol)
+                            print(BUFFER)
+                            validateBuffer(BUFFER)
                     sign = keypoint_classifier_labels[hand_sign_id]
 
                 cv.putText(debug_image, 'Detected: ' + sign, (10, 50),
@@ -218,6 +239,11 @@ def main():
         # Other Stuff
         res = int(t*(width/NEXT_AFTER))
         cv.rectangle(debug_image, (0, height - 20), (res, height), (0, 0, 255), -1)
+        
+        
+        # if (len(BUFFER) > 3) :
+        #     # cv.rectangle(debug_image, (0, height - 20), (res, height), (0, 0, 255), -1)
+        #     cv.putText(debug_image, ''.join(BUFFER[-3: ]), (20, height - 30), cv.FONT_HERSHEY_SIMPLEX, 0.6, (1, 1, 1), 1, cv.LINE_AA)
 
         mode_info(mode, debug_image, COUNTER)
 
@@ -236,6 +262,41 @@ def show_help():
     print('s \t=>\t add a single data when on logging data mode')
     print('g \t=>\t get insight on the collected data')
     print('esc \t=>\t close the application')
+
+def validateBuffer(buffer):
+    global BUFFER
+    
+    try:
+        last = buffer[-1]
+        i = last.index('_')
+        last = last[0: i]
+        list_point = LOOK_UP_TABLE[last]
+
+        if len(buffer) >= len(list_point):
+            for i in range(len(list_point)):
+                if buffer[- len(list_point) + i] == list_point[i]:
+                    print(buffer[- len(list_point) + i], end=' ')
+                    continue
+                else:
+                    return
+            print()
+
+            buffer = [i for i in buffer if '_' not in i]
+            buffer.append(last)
+            BUFFER = buffer
+            # return buffer
+            # buffer[- len(list_point)] = last
+            # del buffer[- len(list_point) + 1: ]
+            # for i in range(len(list_point)): 
+            #     print('removed')
+            #     buffer.pop(- len(list_point) + i)
+
+            # print('found ' + last)
+            # print(buffer)
+    except: 
+        pass
+
+
 
 def calc_bounding_rect(image, landmarks):
     image_width, image_height = image.shape[1], image.shape[0]
