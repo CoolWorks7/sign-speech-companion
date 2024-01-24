@@ -8,6 +8,7 @@ from model import KeyPointClassifier
 import argparse
 import ctypes
 from insight import get_insight
+from transition import finalState, startState, transition
 
 LOOK_UP_TABLE = {
     'h': ['h_1', 'h_2'],
@@ -88,6 +89,8 @@ def main():
             row[0] for row in keypoint_classifier_labels
         ]
 
+    
+    resultDict = {}
     # --------------------- Initial Setup --------------------- #
     mode = 1
     t = 0
@@ -223,14 +226,46 @@ def main():
                 if hand_sign_id == None:
                     sign = 'Not Trained!'
                 else:
-                    symbol = keypoint_classifier_labels[hand_sign_id]
-                    if len(BUFFER) == 0 or BUFFER[-1] != symbol:
-                        if SYMBOL_COUNTER >= MAX_SYMBOL_COUNTER:
-                            SYMBOL_COUNTER = 0
-                            BUFFER.append(symbol)
-                            print(BUFFER)
-                            validateBuffer(BUFFER)
+                    # symbol = keypoint_classifier_labels[hand_sign_id]
+                    # if len(BUFFER) == 0 or BUFFER[-1] != symbol:
+                    #     if SYMBOL_COUNTER >= MAX_SYMBOL_COUNTER:
+                    #         SYMBOL_COUNTER = 0
+                    #         BUFFER.append(symbol)
+                    #         print(BUFFER)
+                    #         validateBuffer(BUFFER)
                     sign = keypoint_classifier_labels[hand_sign_id]
+                    
+                    # creating a temp hash map that contains the number of times a sign was predicted
+                    try :
+                        resultDict[sign] = resultDict[sign] + 1
+                        prominentSign = max(resultDict, key=resultDict.get)
+                        # if sign occurs more than 16 times then it is most prominent sign and we add it to the buffer
+                        if resultDict[prominentSign] > 16:
+                            BUFFER.append(prominentSign)
+                            print(BUFFER)
+                            try:
+                                # The part which should be inside a function
+                                index = len(BUFFER) - 1
+                                state = startState
+                                output = ''
+                                while (index > 0 and state not in finalState) :
+                                    inp = BUFFER[index]
+                                    fin = transition[state][inp]
+                                    state = fin['state']
+                                    output = fin['output']
+                                    index = index - 1
+                                
+                                if output != '':
+                                    BUFFER = BUFFER[0: index + 1]
+                                    BUFFER.append(output)
+                            except:
+                                pass
+                            finally:
+                                resultDict = {} 
+                                cv.rectangle(debug_image, (0, 0), (width, height), (255, 255, 255), -1)
+                                    
+                    except:
+                        resultDict[sign] = 1
 
                 cv.putText(debug_image, 'Detected: ' + sign, (10, 50),
                    cv.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1, cv.LINE_AA)
