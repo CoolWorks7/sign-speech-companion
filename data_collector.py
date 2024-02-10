@@ -53,7 +53,8 @@ def main():
     NEXT_AFTER = 15*seconds
     use_brect = True
     SYMBOL_COUNTER = 0
-    MAX_SYMBOL_COUNTER = 25
+    # MAX_SYMBOL_COUNTER = 25
+    MAX_SYMBOL_COUNTER = 12
 
     # --------------------- Camera Preparation --------------------- #
     cap = cv.VideoCapture(cap_device)

@@ -11,6 +11,8 @@ transition = {
         'deaf_2': {'state': 'q10', 'output': ''},
         'hear_2': {'state': 'q11', 'output': ''},
         'teacher_1': {'state': 'q14', 'output': ''},
+        'thank_you_2': {'state': 'q16', 'output': ''},
+        'child': {'state': 'q20', 'output': ''},
     },
     'q2': {'h_1': {'state': 'q3', 'output': 'h'}},
     'q4': {'hello_1': {'state': 'q3', 'output': 'hello'}},
@@ -27,4 +29,9 @@ transition = {
     'q13': {'hear_1': {'state': 'q3', 'output': 'hear'}},
     'q14': {'teacher_2': {'state': 'q15', 'output': ''}},
     'q15': {'teacher_1': {'state': 'q3', 'output': 'teacher'}},
+    'q16': {'thank_you_1': {'state': 'q3', 'output': 'thank_you'}},
+    'q20': {
+        'Woman': {'state': 'q3', 'output': 'girl'},
+        'Man': {'state': 'q3', 'output': 'boy'}
+    },
 }
