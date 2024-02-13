@@ -13,6 +13,14 @@ transition = {
         'teacher_1': {'state': 'q14', 'output': ''},
         'thank_you_2': {'state': 'q16', 'output': ''},
         'child': {'state': 'q20', 'output': ''},
+        'morning_2': {'state': 'q21', 'output': ''},
+        'morning_1': {'state': 'q22', 'output': ''},
+        'peace_3': {'state': 'q27', 'output': ''},
+        'understand_2': {'state': 'q29', 'output': ''},
+        'understand_1': {'state': 'q30', 'output': ''},
+        'a': {'state': 'q31', 'output': ''},
+        'q': {'state': 'q32', 'output': ''},
+        'u': {'state': 'q33', 'output': ''},
     },
     'q2': {'h_1': {'state': 'q3', 'output': 'h'}},
     'q4': {'hello_1': {'state': 'q3', 'output': 'hello'}},
@@ -20,8 +28,8 @@ transition = {
     'q6': {'sign_1': {'state': 'q3', 'output': 'sign'}},
     'q7': {'language_1': {'state': 'q3', 'output': 'language'}},
     'q9': {
-        'Woman': {'state': 'q3', 'output': 'she'},
-        'Man': {'state': 'q3', 'output': 'he'}
+        'woman': {'state': 'q3', 'output': 'she'},
+        'man': {'state': 'q3', 'output': 'he'}
     },
     'q10': {'deaf_1': {'state': 'q3', 'output': 'deaf'}},
     'q11': {'hear_1': {'state': 'q12', 'output': ''}},
@@ -29,9 +37,21 @@ transition = {
     'q13': {'hear_1': {'state': 'q3', 'output': 'hear'}},
     'q14': {'teacher_2': {'state': 'q15', 'output': ''}},
     'q15': {'teacher_1': {'state': 'q3', 'output': 'teacher'}},
-    'q16': {'thank_you_1': {'state': 'q3', 'output': 'thank_you'}},
+    'q16': {'thank_you_1': {'state': 'q3', 'output': 'thank you'}},
     'q20': {
-        'Woman': {'state': 'q3', 'output': 'girl'},
-        'Man': {'state': 'q3', 'output': 'boy'}
+        'woman': {'state': 'q3', 'output': 'girl'},
+        'man': {'state': 'q3', 'output': 'boy'}
     },
+    'q21': {'morning_1': {'state': 'q3', 'output': 'morning'}},
+    'q22': {'morning_2': {'state': 'q3', 'output': 'night'}},
+    'q27': {'peace_2': {'state': 'q28', 'output': ''}},
+    'q28': {'peace_1': {'state': 'q3', 'output': 'peace'}},
+    'q29': {'understand_1': {'state': 'q3', 'output': 'understand'}},
+    'q30': {'peace_1': {'state': 'q3', 'output': 'remember'}},
+    'q31': {
+        'a': {'state': 'q3', 'output': 'answer'},
+        'woman': {'state': 'q3', 'output': 'aunt'}
+    },
+    'q32': {'q': {'state': 'q3', 'output': 'question'}},
+    'q33': {'u': {'state': 'q3', 'output': 'uncle'}},
 }

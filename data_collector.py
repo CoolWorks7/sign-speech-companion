@@ -50,7 +50,7 @@ def main():
     COUNTER = 0
     LOGGING_BOOL = False
     NUMBER = 0
-    NEXT_AFTER = 15*seconds
+    NEXT_AFTER = 12*seconds
     use_brect = True
     SYMBOL_COUNTER = 0
     # MAX_SYMBOL_COUNTER = 25
