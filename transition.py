@@ -21,6 +21,7 @@ transition = {
         'a': {'state': 'q31', 'output': ''},
         'q': {'state': 'q32', 'output': ''},
         'u': {'state': 'q33', 'output': ''},
+        'what': {'state': 'q34', 'output': ''},
     },
     'q2': {'h_1': {'state': 'q3', 'output': 'h'}},
     'q4': {'hello_1': {'state': 'q3', 'output': 'hello'}},
@@ -54,4 +55,10 @@ transition = {
     },
     'q32': {'q': {'state': 'q3', 'output': 'question'}},
     'q33': {'u': {'state': 'q3', 'output': 'uncle'}},
+    'q34': {
+        'why_1': {'state': 'q3', 'output': 'why'},
+        'place': {'state': 'q3', 'output': 'where'},
+        'time': {'state': 'q3', 'output': 'when'},
+        'this': {'state': 'q3', 'output': 'which'}
+    },
 }
