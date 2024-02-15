@@ -22,6 +22,9 @@ transition = {
         'q': {'state': 'q32', 'output': ''},
         'u': {'state': 'q33', 'output': ''},
         'what': {'state': 'q34', 'output': ''},
+        'marry': {'state': 'q35', 'output': ''},
+        'relation_1': {'state': 'q36', 'output': ''},
+        'relation_2': {'state': 'q37', 'output': ''},
     },
     'q2': {'h_1': {'state': 'q3', 'output': 'h'}},
     'q4': {'hello_1': {'state': 'q3', 'output': 'hello'}},
@@ -60,5 +63,17 @@ transition = {
         'place': {'state': 'q3', 'output': 'where'},
         'time': {'state': 'q3', 'output': 'when'},
         'this': {'state': 'q3', 'output': 'which'}
+    },
+    'q35': {
+        'woman': {'state': 'q3', 'output': 'wife'},
+        'man': {'state': 'q3', 'output': 'man'}
+    },
+    'q36': {
+        'woman': {'state': 'q3', 'output': 'sister'},
+        'man': {'state': 'q3', 'output': 'brother'}
+    },
+    'q37': {
+        'woman': {'state': 'q3', 'output': 'grand mother'},
+        'man': {'state': 'q3', 'output': 'grand father'}
     },
 }
