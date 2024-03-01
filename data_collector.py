@@ -8,7 +8,7 @@ from model import KeyPointClassifier
 import argparse
 import ctypes
 from insight import get_insight
-from transition import finalState, startState, transition
+from transition import finalState, startState, transition, dependent
 
 LOOK_UP_TABLE = {
     'h': ['h_1', 'h_2'],
@@ -28,7 +28,7 @@ def get_args():
     return args
 
 
-BUFFER = []
+BUFFER = ['_']
 
 def main():
     global BUFFER
@@ -95,6 +95,7 @@ def main():
     # --------------------- Initial Setup --------------------- #
     mode = 1
     t = 0
+    t2 = 0
 
     while True:
         key = cv.waitKey(10)
@@ -225,7 +226,7 @@ def main():
                 hand_sign_id = keypoint_classifier(pre_process_merged_list)
 
                 if hand_sign_id == None:
-                    sign = 'Not Trained!'
+                    sign = 'Not Trained!'   
                 else:
                     # symbol = keypoint_classifier_labels[hand_sign_id]
                     # if len(BUFFER) == 0 or BUFFER[-1] != symbol:
@@ -243,7 +244,13 @@ def main():
                         # if sign occurs more than 16 times then it is most prominent sign and we add it to the buffer
                         if resultDict[prominentSign] > 16:
                             BUFFER.append(prominentSign)
-                            print(BUFFER)
+
+                            if prominentSign not in dependent:
+                                print(BUFFER)
+                                BUFFER = ['_']
+                            else:
+                                print(BUFFER)
+
                             try:
                                 # The part which should be inside a function
                                 index = len(BUFFER) - 1
@@ -259,6 +266,9 @@ def main():
                                 if output != '':
                                     BUFFER = BUFFER[0: index + 1]
                                     BUFFER.append(output)
+                                    print(BUFFER)
+                                    BUFFER = ['_']
+
                             except:
                                 pass
                             finally:
@@ -270,7 +280,14 @@ def main():
 
                 cv.putText(debug_image, 'Detected: ' + sign, (10, 50),
                    cv.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1, cv.LINE_AA)
-
+        else:
+            # print(BUFFER)
+            t2 = t2 + 1
+            if t2 > 16 and len(BUFFER) > 1:
+                # if BUFFER[-1] not in dependent:  
+                print(BUFFER)
+                BUFFER = ['_'] 
+                t2 = 0
 
         # Other Stuff
         res = int(t*(width/NEXT_AFTER))

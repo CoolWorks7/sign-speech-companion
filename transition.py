@@ -1,6 +1,8 @@
 finalState = ['q3']
 startState = 'q1'
 
+# in q1 all keys are independent, except for sign_1, hear_2, a, q, u
+# in all other states i.e q2, q3, q4... all the keys are dependent along with a-z
 transition = {
     'q1': {
         'h_2': {'state': 'q2', 'output': ''},
@@ -77,3 +79,10 @@ transition = {
         'man': {'state': 'q3', 'output': 'grand father'}
     },
 }
+
+dependent = set('abcdefghijklmnopqrstuvwxyz')
+dependent.add('sign_1')
+dependent.add('hear_2')
+for key, value in transition.items():
+    for k, v in transition[key].items():
+        dependent.add(k)
